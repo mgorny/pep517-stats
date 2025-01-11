@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
 import argparse
+import json
 import os
 import sys
 import tomllib
 import typing
 
-from collections import defaultdict
 from pathlib import Path
 
 
@@ -60,6 +60,9 @@ def main() -> int:
     argp.add_argument("unpacked_data",
                       help="Path to the directory with unpacked sdists",
                       type=Path)
+    argp.add_argument("out_json",
+                      help="Path to output package JSON to",
+                      type=argparse.FileType("w"))
     args = argp.parse_args()
 
     backend_to_family_mapping = {}
@@ -67,11 +70,7 @@ def main() -> int:
         for member in members:
             backend_to_family_mapping[member] = family
 
-    build_backend_families = defaultdict(lambda: defaultdict(int))
-    setuptools_formats = defaultdict(int)
-    setuptools_wheel_deps = 0
-    other_backends_using_setuptools = defaultdict(int)
-
+    packages = {}
     for i, dist in enumerate(args.unpacked_data.iterdir()):
         if i % 200 == 0:
             print(f"Processed {i} packages.")
@@ -94,7 +93,6 @@ def main() -> int:
             except IndexError:
                 family = "(custom)"
             backend = "(custom)"
-        build_backend_families[family][backend] += 1
 
         # 3) check which setup files are used by setuptools projects
         formats = []
@@ -111,49 +109,15 @@ def main() -> int:
                 pass
             if dist.joinpath("setup.py").exists():
                 formats.append("setup.py")
-            setuptools_formats[tuple(formats)] += 1
 
-            # 4) check if wheel dependencies are specified
-            if "wheel" in (" ".join(requires or [])):
-                setuptools_wheel_deps += 1
+        packages[str(dist.name)] = {
+            "family": family,
+            "backend": backend,
+            "formats": formats,
+            "requires": requires,
+        }
 
-        # 5) check for other build systems combining setuptools
-        if family != "setuptools":
-            if "setuptools" in (" ".join(requires)):
-                other_backends_using_setuptools[family] += 1
-
-    # print the data
-    print("BUILD BACKEND STATS")
-    for family, members in sorted(build_backend_families.items(),
-                                  key=lambda kv: sum(kv[1].values()),
-                                  reverse=True):
-        if len(members) > 1:
-            print(f"{family:20} {'(total)':35} {sum(members.values()):4}")
-        for member, count in sorted(members.items(),
-                                    key=lambda kv: kv[1],
-                                    reverse=True):
-            if member is None:
-                member = "(none)"
-            print(f"{family:20} {member:35} {count:4}")
-    print()
-
-    print("SETUPTOOLS CONFIG FORMATS")
-    for formats, count in sorted(setuptools_formats.items(),
-                                 key=lambda kv: kv[1],
-                                 reverse=True):
-        if not formats:
-            formats = ["(none -- broken)"]
-        print(f"{' + '.join(formats):56} {count:4}")
-    print()
-
-    print(f"SETUPTOOLS WHEEL DEPENDENCIES: {setuptools_wheel_deps:4}")
-    print()
-
-    print("OTHER BACKENDS USING SETUPTOOLS")
-    for backend, count in sorted(other_backends_using_setuptools.items(),
-                                 key=lambda kv: kv[1],
-                                 reverse=True):
-        print(f"{backend:56} {count:4}")
+    json.dump(packages, args.out_json)
 
 
 if __name__ == "__main__":

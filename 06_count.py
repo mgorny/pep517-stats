@@ -1,12 +1,19 @@
 #!/usr/bin/env python
 
 import argparse
+import dataclasses
 import json
 import os
+import packaging
 import sys
+import typing
 
 from collections import defaultdict
+from functools import lru_cache
 from pathlib import Path
+
+from packaging.requirements import Requirement
+from packaging.utils import canonicalize_name
 
 
 BACKGROUND_COLORS = [
@@ -17,6 +24,27 @@ BACKGROUND_COLORS = [
     "#eff",
     "#fef",
 ]
+
+
+
+@lru_cache
+def requirement_to_package(requirement: str) -> str:
+    return canonicalize_name(Requirement(requirement).name)
+
+
+def deduped_requirements(req_list: typing.Optional[list[str]]) -> set[str]:
+    reqs = {requirement_to_package(req) for req in req_list or []}
+    return reqs
+
+
+@dataclasses.dataclass
+class DepCount:
+    direct: int = 0
+    dynamic: int = 0
+
+    @property
+    def sum(self) -> int:
+        return self.direct + self.dynamic
 
 
 def main() -> int:
@@ -32,6 +60,7 @@ def main() -> int:
     setuptools_formats = defaultdict(int)
     setuptools_wheel_deps = 0
     other_backends_using_setuptools = defaultdict(int)
+    dependencies = defaultdict(DepCount)
 
     for package in packages.values():
         build_backend_families[package["family"]][package["backend"]] += 1
@@ -45,6 +74,10 @@ def main() -> int:
             # check for other build systems combining setuptools
             if "setuptools" in (" ".join(package["requires"])):
                 other_backends_using_setuptools[package["family"]] += 1
+        for req in deduped_requirements(package.get("requires")):
+            dependencies[requirement_to_package(req)].direct += 1
+        for req in deduped_requirements(package.get("requires-dynamic")):
+            dependencies[requirement_to_package(req)].dynamic += 1
 
     # 1) table with cumulative backend statistics
     print("<table style={{width: 'auto', margin: '0 2em', display: 'inline-block', verticalAlign: 'top'}}>")
@@ -118,6 +151,21 @@ def main() -> int:
         count = sum(subcount for formats, subcount in setuptools_formats.items()
                     if fformat in formats)
         print(f"  <tr><td>`{ fformat }`</td><td align='right'>{ count }</td></tr>")
+
+    print("</table>")
+    print()
+
+    # 5) requirements
+    print("<table style={{width: 'auto', margin: '0 2em', display: 'inline-block', verticalAlign: 'top'}}>")
+    print("  <caption>Table 5. Build requirements</caption>")
+    print("  <tr><th>Package</th><th>`pyproject.toml`</th><th>via hook</th></tr>")
+
+    for dependency, counts in sorted(dependencies.items(),
+                                     key=lambda kv: (-kv[1].sum, kv[0])):
+        print(f"  <tr><td>`{ dependency }`</td>"
+              f"<td align='right'>{ counts.direct }</td>"
+              f"<td align='right'>{ counts.dynamic }</td>"
+              f"<td align='right'>{ counts.sum }</td></tr>")
 
     print("</table>")
 

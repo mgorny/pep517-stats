@@ -150,7 +150,7 @@ def main() -> int:
     # 1) table with cumulative backend statistics
     print("<table style={{width: 'auto', margin: '0 2em', display: 'inline-block', verticalAlign: 'top'}}>")
     print("  <caption>Table 1. Cumulative backend use counts</caption>")
-    print("  <tr><th>Backend / family</th><th>Count</th></tr>")
+    print("  <tr><th>Family or backend</th><th>Count</th></tr>")
 
     family_colors = list(BACKGROUND_COLORS)
     for family, data in sorted(build_backend_families.items(),
@@ -170,7 +170,7 @@ def main() -> int:
     # 2) table with per-backend details
     print("<table style={{width: 'auto', margin: '0 2em', display: 'inline-block', verticalAlign: 'top'}}>")
     print("  <caption>Table 2. Detailed counts for common families</caption>")
-    print("  <tr><th>Family / backend</th><th>Count</th></tr>")
+    print("  <tr><th colspan='2'>Family and backend</th><th>Count</th></tr>")
 
     family_colors = list(BACKGROUND_COLORS)
     for family, data in sorted(build_backend_families.items(),
@@ -179,14 +179,17 @@ def main() -> int:
         if len(data) > 1:
             color = family_colors.pop()
             print(f"  <tr style={{{{ background: '{ color }' }}}}>"
-                  f"<th>{ family }</th><th></th></tr>")
+                  f"<th colspan='2'>{ family }</th><th></th></tr>")
             for backend, count in sorted(data.items(),
                                          key=lambda kv: kv[1],
                                          reverse=True):
-                if backend != "(custom)":
+                if backend is None:
+                    backend = "(none)"
+                elif backend != "(custom)":
                     backend = f"`{backend}`"
                 print(f"  <tr style={{{{ background: '{ color }' }}}}>"
-                      f"<td>{ backend }</td><td align='right'>{ count }</td></tr>")
+                      f"<td></td><td>{ backend }</td>"
+                      f"<td align='right'>{ count }</td></tr>")
 
     print("</table>")
 

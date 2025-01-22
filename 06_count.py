@@ -25,6 +25,69 @@ BACKGROUND_COLORS = [
     "#fef",
 ]
 
+ALT_COLOR = "#eee"
+
+
+SELECTED_DEP_FAMILIES = (
+    "hatchling",
+    "mesonpy",
+    "pdm",
+    "poetry",
+    "scikit-build-core",
+    "setuptools",
+)
+
+SELECTED_DEP_PACKAGES = {
+    "setuptools",
+    "wheel",
+    "setuptools-scm",
+    "cython",
+    "hatch-vcs",
+    "pytest-runner",
+    "pbr",
+    "pybind11",
+    "cffi",
+    "hatch-fancy-pypi-readme",
+    "poetry-dynamic-versioning",
+    "versioneer",
+    "setuptools-rust",
+    "hatch-jupyter-builder",
+    "scikit-build",
+    "setuptools-scm-git-archive",
+    "hatch-requirements-txt",
+    "setuptools-git-versioning",
+    "versioningit",
+    "hatch-nodejs-version",
+    "jupyter-packaging",
+    "nanobind",
+    "py-cpuinfo",
+    "hatch-regex-commit",
+    "incremental",
+    "poetry-plugin-tweak-dependencies-version",
+    "setupmeta",
+    "setuptools-dso",
+    "calver",
+    "hatch-cython",
+    "poetry-plugin-drop-python-upper-constraint",
+    "setuptools-changelog-shortener",
+    "setuptools-declarative-requirements",
+    "setuptools-git",
+    "setuptools-golang",
+    "changelog-chug",
+    "cppy",
+    "git-versioner",
+    "hatch-docstring-description",
+    "pdm-build-locked",
+    "setuptools-download",
+    "setuptools-lint",
+    "setuptools-markdown",
+    "setuptools-pipfile",
+    "setuptools-twine",
+    "vcversioner",
+    "versioneer-518",
+    "cmake",
+    "ninja",
+}
 
 
 @lru_cache
@@ -60,7 +123,8 @@ def main() -> int:
     setuptools_formats = defaultdict(int)
     setuptools_wheel_deps = 0
     other_backends_using_setuptools = defaultdict(int)
-    dependencies = defaultdict(DepCount)
+    dependencies = defaultdict(lambda: defaultdict(DepCount))
+    total_dependencies = defaultdict(int)
 
     for package in packages.values():
         build_backend_families[package["family"]][package["backend"]] += 1
@@ -74,10 +138,14 @@ def main() -> int:
             # check for other build systems combining setuptools
             if "setuptools" in (" ".join(package["requires"])):
                 other_backends_using_setuptools[package["family"]] += 1
-        for req in deduped_requirements(package.get("requires")):
-            dependencies[requirement_to_package(req)].direct += 1
-        for req in deduped_requirements(package.get("requires-dynamic")):
-            dependencies[requirement_to_package(req)].dynamic += 1
+
+        if package["family"] in SELECTED_DEP_FAMILIES:
+            for req in deduped_requirements(package.get("requires")):
+                dependencies[requirement_to_package(req)][package["family"]].direct += 1
+            for req in deduped_requirements(package.get("requires-dynamic")):
+                dependencies[requirement_to_package(req)][package["family"]].dynamic += 1
+        for req in deduped_requirements((package.get("requires") or []) + (package.get("requires-dynamic") or [])):
+            total_dependencies[req] += 1
 
     # 1) table with cumulative backend statistics
     print("<table style={{width: 'auto', margin: '0 2em', display: 'inline-block', verticalAlign: 'top'}}>")
@@ -156,16 +224,32 @@ def main() -> int:
     print()
 
     # 5) requirements
-    print("<table style={{width: 'auto', margin: '0 2em', display: 'inline-block', verticalAlign: 'top'}}>")
-    print("  <caption>Table 5. Build requirements</caption>")
-    print("  <tr><th>Package</th><th>`pyproject.toml`</th><th>via hook</th></tr>")
+    print("<table>")
+    print(f"  <caption>Table 5. Selected build requirements (P = `pyproject.toml`, H = via hook)</caption>")
+    print("  <tr><th rowspan='2'>Package</th>", end="")
+    for family in SELECTED_DEP_FAMILIES:
+        print(f"<th colspan='2' align='center'>{family}</th>", end="")
+    print("<th rowspan='2' style={{ textAlign: 'center', width: '3.2em'}}>Total</th></tr>")
+    print("  <tr>", end="")
+    for family in SELECTED_DEP_FAMILIES:
+        for header in ("P", "H"):
+            print(f"<th style={{{{ textAlign: 'center', width: '3.2em'}}}}>{header}</th>", end="")
+    print("</tr>")
 
-    for dependency, counts in sorted(dependencies.items(),
-                                     key=lambda kv: (-kv[1].sum, kv[0])):
-        print(f"  <tr><td>`{ dependency }`</td>"
-              f"<td align='right'>{ counts.direct }</td>"
-              f"<td align='right'>{ counts.dynamic }</td>"
-              f"<td align='right'>{ counts.sum }</td></tr>")
+    for i, (dependency, total) in enumerate(sorted(filter(lambda kv: kv[0] in SELECTED_DEP_PACKAGES,
+                                                          total_dependencies.items()),
+                                                   key=lambda kv: (-kv[1], kv[0]))):
+        counts = dependencies[dependency]
+        if i % 2 == 1:
+            print(f"  <tr style={{{{ background: '{ ALT_COLOR }' }}}}>", end="")
+        else:
+            print(f"  <tr>", end="")
+        print(f"<td>`{ dependency }`</td>", end="")
+        for family in SELECTED_DEP_FAMILIES:
+              print(f"<td align='right'>{ counts[family].direct }</td>"
+                    f"<td align='right'>{ counts[family].dynamic }</td>",
+                    end="")
+        print(f"<td align='right'>{ total_dependencies[dependency] }</td></tr>")
 
     print("</table>")
 

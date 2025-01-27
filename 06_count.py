@@ -128,9 +128,8 @@ def main() -> int:
 
     for package in packages.values():
         build_backend_families[package["family"]][package["backend"]] += 1
-        formats = package["formats"]
         if package["family"] == "setuptools":
-            setuptools_formats[tuple(formats)] += 1
+            setuptools_formats[tuple(package["formats"])] += 1
             # check if wheel dependencies are specified
             if "wheel" in (" ".join(package["requires"] or [])):
                 setuptools_wheel_deps += 1
@@ -148,7 +147,7 @@ def main() -> int:
             total_dependencies[req] += 1
 
     # 1) table with cumulative backend statistics
-    print("<table style={{width: 'auto', margin: '0 2em', display: 'inline-block', verticalAlign: 'top'}}>")
+    print("<table id='table-1' style={{width: 'auto', margin: '0 2em', display: 'inline-block', verticalAlign: 'top'}}>")
     print("  <caption>Table 1. Cumulative backend use counts</caption>")
     print("  <tr><th>Family or backend</th><th>Count</th></tr>")
 
@@ -168,7 +167,7 @@ def main() -> int:
     print("</table>")
 
     # 2) table with per-backend details
-    print("<table style={{width: 'auto', margin: '0 2em', display: 'inline-block', verticalAlign: 'top'}}>")
+    print("<table id='table-2' style={{width: 'auto', margin: '0 2em', display: 'inline-block', verticalAlign: 'top'}}>")
     print("  <caption>Table 2. Detailed counts for common families</caption>")
     print("  <tr><th colspan='2'>Family and backend</th><th>Count</th></tr>")
 
@@ -196,7 +195,7 @@ def main() -> int:
     print()
 
     # 3) table with setuptools configuration formats
-    print("<table style={{width: 'auto', margin: '0 2em', display: 'inline-block', verticalAlign: 'top'}}>")
+    print("<table id='table-3' style={{width: 'auto', margin: '0 2em', display: 'inline-block', verticalAlign: 'top'}}>")
     print("  <caption>Table 3. Counts for setuptools configuration format combinations</caption>")
     print("  <tr><th>Formats</th><th>Count</th></tr>")
 
@@ -211,7 +210,7 @@ def main() -> int:
     print("</table>")
 
     # 4) table with totals
-    print("<table style={{width: 'auto', margin: '0 2em', display: 'inline-block', verticalAlign: 'top'}}>")
+    print("<table id='table-4' style={{width: 'auto', margin: '0 2em', display: 'inline-block', verticalAlign: 'top'}}>")
     print("  <caption>Table 4. Cumulative counts for every configuration format</caption>")
     print("  <tr><th>Format</th><th>Total</th></tr>")
 
@@ -227,7 +226,7 @@ def main() -> int:
     print()
 
     # 5) requirements
-    print("<table>")
+    print("<table id='table-5'>")
     print(f"  <caption>Table 5. Selected build requirements (P = `pyproject.toml`, H = via hook)</caption>")
     print("  <tr><th rowspan='2'>Package</th>", end="")
     for family in SELECTED_DEP_FAMILIES:

@@ -37,57 +37,65 @@ SELECTED_DEP_FAMILIES = (
     "setuptools",
 )
 
-SELECTED_DEP_PACKAGES = {
-    "setuptools",
-    "wheel",
-    "setuptools-scm",
-    "cython",
-    "hatch-vcs",
-    "pytest-runner",
-    "pbr",
-    "pybind11",
-    "cffi",
-    "hatch-fancy-pypi-readme",
-    "poetry-dynamic-versioning",
-    "versioneer",
-    "setuptools-rust",
-    "hatch-jupyter-builder",
-    "scikit-build",
-    "setuptools-scm-git-archive",
-    "hatch-requirements-txt",
-    "setuptools-git-versioning",
-    "versioningit",
-    "hatch-nodejs-version",
-    "jupyter-packaging",
-    "nanobind",
-    "py-cpuinfo",
-    "hatch-regex-commit",
-    "incremental",
-    "poetry-plugin-tweak-dependencies-version",
-    "setupmeta",
-    "setuptools-dso",
-    "calver",
-    "hatch-cython",
-    "poetry-plugin-drop-python-upper-constraint",
-    "setuptools-changelog-shortener",
-    "setuptools-declarative-requirements",
-    "setuptools-git",
-    "setuptools-golang",
-    "changelog-chug",
-    "cppy",
-    "git-versioner",
-    "hatch-docstring-description",
-    "pdm-build-locked",
-    "setuptools-download",
-    "setuptools-lint",
-    "setuptools-markdown",
-    "setuptools-pipfile",
-    "setuptools-twine",
-    "vcversioner",
-    "versioneer-518",
-    "cmake",
-    "ninja",
-}
+SELECTED_DEP_PACKAGES = [
+    ("Setuptools dependencies", {
+        "setuptools",
+        "wheel",
+    }),
+    ("Versioning plugins", {
+        "incremental",
+        "setuptools-git",
+        "calver",
+        "setuptools-scm",
+        "setuptools-scm-git-archive",
+        "hatch-vcs",
+        "poetry-dynamic-versioning",
+        "versioneer",
+        "setuptools-git-versioning",
+        "versioningit",
+        "hatch-nodejs-version",
+        "git-versioner",
+        "vcversioner",
+        "versioneer-518",
+    }),
+    ("Dependencies related to extension building", {
+        "cython",
+        "hatch-cython",
+        "pybind11",
+        "cppy",
+        "cffi",
+        "setuptools-dso",
+        "setuptools-rust",
+        "scikit-build",
+        "nanobind",
+        "py-cpuinfo",
+        "cmake",
+        "ninja",
+    }),
+    ("Other build system plugins", {
+        "pytest-runner",
+        "pbr",
+        "hatch-jupyter-builder",
+        "jupyter-packaging",
+        "hatch-fancy-pypi-readme",
+        "hatch-requirements-txt",
+        "hatch-regex-commit",
+        "setuptools-golang",
+        "changelog-chug",
+        "hatch-docstring-description",
+        "pdm-build-locked",
+        "setuptools-download",
+        "setuptools-lint",
+        "setuptools-markdown",
+        "setuptools-pipfile",
+        "setuptools-twine",
+        "poetry-plugin-tweak-dependencies-version",
+        "setupmeta",
+        "poetry-plugin-drop-python-upper-constraint",
+        "setuptools-changelog-shortener",
+        "setuptools-declarative-requirements",
+    }),
+]
 
 
 @lru_cache
@@ -226,34 +234,38 @@ def main() -> int:
     print()
 
     # 5) requirements
-    print("<table id='table-5'>")
-    print(f"  <caption>Table 5. Selected build requirements (P = `pyproject.toml`, H = via hook)</caption>")
-    print("  <tr><th rowspan='2'>Package</th>", end="")
-    for family in SELECTED_DEP_FAMILIES:
-        print(f"<th colspan='2' align='center'>{family}</th>", end="")
-    print("<th rowspan='2' style={{ textAlign: 'center', width: '3.2em'}}>Total</th></tr>")
-    print("  <tr>", end="")
-    for family in SELECTED_DEP_FAMILIES:
-        for header in ("P", "H"):
-            print(f"<th style={{{{ textAlign: 'center', width: '3.2em'}}}}>{header}</th>", end="")
-    print("</tr>")
-
-    for i, (dependency, total) in enumerate(sorted(filter(lambda kv: kv[0] in SELECTED_DEP_PACKAGES,
-                                                          total_dependencies.items()),
-                                                   key=lambda kv: (-kv[1], kv[0]))):
-        counts = dependencies[dependency]
-        if i % 2 == 1:
-            print(f"  <tr style={{{{ background: '{ ALT_COLOR }' }}}}>", end="")
-        else:
-            print(f"  <tr>", end="")
-        print(f"<td>`{ dependency }`</td>", end="")
+    for group_num, (group_title, group) in enumerate(SELECTED_DEP_PACKAGES):
+        print(f"<table id='table-{ group_num + 5 }'>")
+        print(f"  <caption>Table { group_num + 5}. { group_title } "
+              "(P = `pyproject.toml`, H = via hook)</caption>")
+        print("  <tr><th rowspan='2'>Package</th>", end="")
         for family in SELECTED_DEP_FAMILIES:
-              print(f"<td align='right'>{ counts[family].direct }</td>"
-                    f"<td align='right'>{ counts[family].dynamic }</td>",
-                    end="")
-        print(f"<td align='right'>{ total_dependencies[dependency] }</td></tr>")
+            print(f"<th colspan='2' align='center'>{family}</th>", end="")
+        print("<th rowspan='2' style={{ textAlign: 'center', width: '3.2em'}}>Total</th></tr>")
+        print("  <tr>", end="")
+        for family in SELECTED_DEP_FAMILIES:
+            for header in ("P", "H"):
+                print(f"<th style={{{{ textAlign: 'center', width: '3.2em'}}}}>{header}</th>", end="")
+        print("</tr>")
 
-    print("</table>")
+        for i, (dependency, total) in enumerate(
+            sorted(filter(lambda kv: kv[0] in group,
+                          total_dependencies.items()),
+                   key=lambda kv: (-kv[1], kv[0]))
+        ):
+            counts = dependencies[dependency]
+            if i % 2 == 1:
+                print(f"  <tr style={{{{ background: '{ ALT_COLOR }' }}}}>", end="")
+            else:
+                print(f"  <tr>", end="")
+            print(f"<td>`{ dependency }`</td>", end="")
+            for family in SELECTED_DEP_FAMILIES:
+                  print(f"<td align='right'>{ counts[family].direct }</td>"
+                        f"<td align='right'>{ counts[family].dynamic }</td>",
+                        end="")
+            print(f"<td align='right'>{ total_dependencies[dependency] }</td></tr>")
+
+        print("</table>")
 
 
 if __name__ == "__main__":

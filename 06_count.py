@@ -235,18 +235,25 @@ def main() -> int:
 
     # 5) requirements
     for group_num, (group_title, group) in enumerate(SELECTED_DEP_PACKAGES):
-        print(f"<table id='table-{ group_num + 5 }'>")
-        print(f"  <caption>Table { group_num + 5}. { group_title } "
-              "(P = `pyproject.toml`, H = via hook)</caption>")
-        print("  <tr><th rowspan='2'>Package</th>", end="")
-        for family in SELECTED_DEP_FAMILIES:
-            print(f"<th colspan='2' align='center'>{family}</th>", end="")
-        print("<th rowspan='2' style={{ textAlign: 'center', width: '3.2em'}}>Total</th></tr>")
-        print("  <tr>", end="")
-        for family in SELECTED_DEP_FAMILIES:
-            for header in ("P", "H"):
-                print(f"<th style={{{{ textAlign: 'center', width: '3.2em'}}}}>{header}</th>", end="")
-        print("</tr>")
+        if group_num == 0:
+            # use per-backend counts for the first table only
+            print(f"<table id='table-{ group_num + 5 }'>")
+            print(f"  <caption>Table { group_num + 5}. { group_title } "
+                  "(P = `pyproject.toml`, H = via hook)</caption>")
+            print("  <tr><th rowspan='2'>Package</th>", end="")
+            for family in SELECTED_DEP_FAMILIES:
+                print(f"<th colspan='2' align='center'>{family}</th>", end="")
+            print("<th rowspan='2' style={{ textAlign: 'center', width: '3.2em'}}>Total</th></tr>")
+            print("  <tr>", end="")
+            for family in SELECTED_DEP_FAMILIES:
+                for header in ("P", "H"):
+                    print(f"<th style={{{{ textAlign: 'center', width: '3.2em'}}}}>{header}</th>", end="")
+            print("</tr>")
+        else:
+            print(f"<table id='table-{ group_num + 5 }' "
+                  "style={{width: 'auto', margin: '0 .5em', display: 'inline-block', verticalAlign: 'top'}}>")
+            print(f"  <caption>Table { group_num + 5}. { group_title }</caption>")
+            print("  <tr><th>Package</th><th style={{ textAlign: 'center', width: '3.2em'}}>Total</th></tr>")
 
         for i, (dependency, total) in enumerate(
             sorted(filter(lambda kv: kv[0] in group,
@@ -259,10 +266,11 @@ def main() -> int:
             else:
                 print(f"  <tr>", end="")
             print(f"<td>`{ dependency }`</td>", end="")
-            for family in SELECTED_DEP_FAMILIES:
-                  print(f"<td align='right'>{ counts[family].direct }</td>"
-                        f"<td align='right'>{ counts[family].dynamic }</td>",
-                        end="")
+            if group_num == 0:
+                for family in SELECTED_DEP_FAMILIES:
+                      print(f"<td align='right'>{ counts[family].direct }</td>"
+                            f"<td align='right'>{ counts[family].dynamic }</td>",
+                            end="")
             print(f"<td align='right'>{ total_dependencies[dependency] }</td></tr>")
 
         print("</table>")

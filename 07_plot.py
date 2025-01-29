@@ -121,6 +121,7 @@ def main() -> int:
     fig, ax = plt.subplots()
     formats = ("setup.py", "setup.cfg", "pyproject.toml")
     venn3([setuptools_formats[x] for x in formats],
+          set_colors=((1, .5, .5), (.5, 1, .5), (.5, .5, 1)),
           set_labels=formats)
     plt.savefig("fig3.svg",
                 transparent=True,

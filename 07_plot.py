@@ -21,7 +21,7 @@ FAMILY_COLORS = [
 SETUPTOOLS_COLORS = [
     (1, .9, .9),
     (.9, 1, .9),
-    (.5, .5, .5),
+    (.8, .8, .8),
 ]
 
 
@@ -85,7 +85,7 @@ def main() -> int:
            },
            startangle=180,
            counterclock=False)
-    plt.savefig("fig1.png",
+    plt.savefig("fig1.svg",
                 transparent=True,
                 dpi=96,
                 bbox_inches="tight")
@@ -112,7 +112,7 @@ def main() -> int:
            startangle=180,
            counterclock=False,
            normalize=False)
-    plt.savefig("fig2.png",
+    plt.savefig("fig2.svg",
                 transparent=True,
                 dpi=96,
                 bbox_inches="tight")
@@ -122,7 +122,7 @@ def main() -> int:
     formats = ("setup.py", "setup.cfg", "pyproject.toml")
     venn3([setuptools_formats[x] for x in formats],
           set_labels=formats)
-    plt.savefig("fig3.png",
+    plt.savefig("fig3.svg",
                 transparent=True,
                 dpi=96,
                 bbox_inches="tight")

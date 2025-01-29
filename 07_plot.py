@@ -21,7 +21,7 @@ FAMILY_COLORS = [
 SETUPTOOLS_COLORS = [
     (1, .9, .9),
     (.9, 1, .9),
-    (.8, .8, .8),
+    (1, .9, 1),
 ]
 
 

@@ -38,10 +38,6 @@ SELECTED_DEP_FAMILIES = (
 )
 
 SELECTED_DEP_PACKAGES = [
-    ("Setuptools dependencies", {
-        "setuptools",
-        "wheel",
-    }),
     ("Versioning plugins", {
         "incremental",
         "setuptools-git",
@@ -233,27 +229,37 @@ def main() -> int:
     print("</table>")
     print()
 
-    # 5) requirements
+    # 5) setuptools/wheel deps
+    print("<table id='table-5' style={{margin: 'auto', width: 'auto'}}>")
+    print("  <caption>Table 5. Setuptools and wheel dependencies</caption>")
+    print("  <tr><th rowspan='2'>Build backend</th>"
+          "<th rowspan='2'>Dependency</th>"
+          "<th align='center' colspan='2'>Package</th></tr>")
+    print("  <tr><th>setuptools</th><th>wheel</th></tr>")
+    for family, family_data in sorted(build_backend_families.items()):
+        if dependencies["setuptools"][family].sum == 0:
+            continue
+        backend = family
+        if backend != "(custom)" and len(family_data) <= 1:
+            backend = f"`{ backend }`"
+        print(f"  <tr><td rowspan='2'>{backend}</td><td>direct</td>"
+              f"<td align='right'>{dependencies['setuptools'][family].direct}</td>"
+              f"<td align='right'>{dependencies['wheel'][family].direct}</td></tr>")
+        print(f"  <tr><td>via hook</td>"
+              f"<td align='right'>{dependencies['setuptools'][family].direct}</td>"
+              f"<td align='right'>{dependencies['wheel'][family].direct}</td></tr>")
+    print("  <tr><td colspan='2'>Total</td>"
+          f"<td align='right'>{total_dependencies['setuptools']}</td>"
+          f"<td align='right'>{total_dependencies['wheel']}</td></tr>")
+    print("</table>")
+    print()
+
+    # 6) other requirements
     for group_num, (group_title, group) in enumerate(SELECTED_DEP_PACKAGES):
-        if group_num == 0:
-            # use per-backend counts for the first table only
-            print(f"<table id='table-{ group_num + 5 }'>")
-            print(f"  <caption>Table { group_num + 5}. { group_title } "
-                  "(P = `pyproject.toml`, H = via hook)</caption>")
-            print("  <tr><th rowspan='2'>Package</th>", end="")
-            for family in SELECTED_DEP_FAMILIES:
-                print(f"<th colspan='2' align='center'>{family}</th>", end="")
-            print("<th rowspan='2' style={{ textAlign: 'center', width: '3.2em'}}>Total</th></tr>")
-            print("  <tr>", end="")
-            for family in SELECTED_DEP_FAMILIES:
-                for header in ("P", "H"):
-                    print(f"<th style={{{{ textAlign: 'center', width: '3.2em'}}}}>{header}</th>", end="")
-            print("</tr>")
-        else:
-            print(f"<table id='table-{ group_num + 5 }' "
-                  "style={{width: 'auto', margin: '0 .5em', display: 'inline-block', verticalAlign: 'top'}}>")
-            print(f"  <caption>Table { group_num + 5}. { group_title }</caption>")
-            print("  <tr><th>Package</th><th style={{ textAlign: 'center', width: '3.2em'}}>Total</th></tr>")
+        print(f"<table id='table-{ group_num + 6 }' "
+              "style={{width: 'auto', margin: '0 .5em', display: 'inline-block', verticalAlign: 'top'}}>")
+        print(f"  <caption>Table { group_num + 6}. { group_title }</caption>")
+        print("  <tr><th>Package</th><th style={{ textAlign: 'center', width: '3.2em'}}>Total</th></tr>")
 
         for i, (dependency, total) in enumerate(
             sorted(filter(lambda kv: kv[0] in group,
@@ -266,11 +272,6 @@ def main() -> int:
             else:
                 print(f"  <tr>", end="")
             print(f"<td>`{ dependency }`</td>", end="")
-            if group_num == 0:
-                for family in SELECTED_DEP_FAMILIES:
-                      print(f"<td align='right'>{ counts[family].direct }</td>"
-                            f"<td align='right'>{ counts[family].dynamic }</td>",
-                            end="")
             print(f"<td align='right'>{ total_dependencies[dependency] }</td></tr>")
 
         print("</table>")

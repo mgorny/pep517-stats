@@ -233,7 +233,8 @@ def main() -> int:
     print("<table id='table-5' style={{margin: 'auto', width: 'auto'}}>")
     print("  <caption>Table 5. Setuptools and wheel dependencies</caption>")
     print("  <tr><th>Build backend</th><th>setuptools</th><th>wheel</th></tr>")
-    for family, family_data in sorted(build_backend_families.items()):
+    for family, family_data in sorted(build_backend_families.items(),
+                                      key=lambda kv: -dependencies["setuptools"][kv[0]].sum):
         if dependencies["setuptools"][family].sum == 0:
             continue
         backend = family

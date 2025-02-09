@@ -246,8 +246,8 @@ def main() -> int:
               f"<td align='right'>{dependencies['setuptools'][family].direct}</td>"
               f"<td align='right'>{dependencies['wheel'][family].direct}</td></tr>")
         print(f"  <tr><td>via hook</td>"
-              f"<td align='right'>{dependencies['setuptools'][family].direct}</td>"
-              f"<td align='right'>{dependencies['wheel'][family].direct}</td></tr>")
+              f"<td align='right'>{dependencies['setuptools'][family].dynamic}</td>"
+              f"<td align='right'>{dependencies['wheel'][family].dynamic}</td></tr>")
     print("  <tr><td colspan='2'>Total</td>"
           f"<td align='right'>{total_dependencies['setuptools']}</td>"
           f"<td align='right'>{total_dependencies['wheel']}</td></tr>")

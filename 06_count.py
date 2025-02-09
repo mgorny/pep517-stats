@@ -232,23 +232,17 @@ def main() -> int:
     # 5) setuptools/wheel deps
     print("<table id='table-5' style={{margin: 'auto', width: 'auto'}}>")
     print("  <caption>Table 5. Setuptools and wheel dependencies</caption>")
-    print("  <tr><th rowspan='2'>Build backend</th>"
-          "<th rowspan='2'>Dependency</th>"
-          "<th align='center' colspan='2'>Package</th></tr>")
-    print("  <tr><th>setuptools</th><th>wheel</th></tr>")
+    print("  <tr><th>Build backend</th><th>setuptools</th><th>wheel</th></tr>")
     for family, family_data in sorted(build_backend_families.items()):
         if dependencies["setuptools"][family].sum == 0:
             continue
         backend = family
         if backend != "(custom)" and len(family_data) <= 1:
             backend = f"`{ backend }`"
-        print(f"  <tr><td rowspan='2'>{backend}</td><td>direct</td>"
-              f"<td align='right'>{dependencies['setuptools'][family].direct}</td>"
-              f"<td align='right'>{dependencies['wheel'][family].direct}</td></tr>")
-        print(f"  <tr><td>via hook</td>"
-              f"<td align='right'>{dependencies['setuptools'][family].dynamic}</td>"
-              f"<td align='right'>{dependencies['wheel'][family].dynamic}</td></tr>")
-    print("  <tr><td colspan='2'>Total</td>"
+        print(f"  <tr><td>{backend}</td>"
+              f"<td align='right'>{dependencies['setuptools'][family].sum}</td>"
+              f"<td align='right'>{dependencies['wheel'][family].sum}</td></tr>")
+    print("  <tr><td>Total</td>"
           f"<td align='right'>{total_dependencies['setuptools']}</td>"
           f"<td align='right'>{total_dependencies['wheel']}</td></tr>")
     print("</table>")

@@ -155,12 +155,14 @@ def main() -> int:
     print("  <caption>Table 1. Cumulative backend use counts</caption>")
     print("  <tr><th>Family or backend</th><th>Count</th></tr>")
 
-    family_colors = list(BACKGROUND_COLORS)
+    color_list = list(BACKGROUND_COLORS)
+    family_colors = {}
     for family, data in sorted(build_backend_families.items(),
                                key=lambda kv: sum(kv[1].values()),
                                reverse=True):
         if len(data) > 1:
-            print(f"  <tr style={{{{ background: '{ family_colors.pop() }' }}}}>"
+            family_colors[family] = color_list.pop()
+            print(f"  <tr style={{{{ background: '{ family_colors[family] }' }}}}>"
                   f"<td style={{{{ height: '4em' }}}}>{ family }</td><td align='right'>{ sum(data.values()) }</td></tr>")
         else:
             backend, count = next(iter(data.items()))
@@ -175,12 +177,12 @@ def main() -> int:
     print("  <caption>Table 2. Detailed counts for common families</caption>")
     print("  <tr><th colspan='2'>Family and backend</th><th>Count</th></tr>")
 
-    family_colors = list(BACKGROUND_COLORS)
+    color_list = list(BACKGROUND_COLORS)
     for family, data in sorted(build_backend_families.items(),
                                key=lambda kv: sum(kv[1].values()),
                                reverse=True):
         if len(data) > 1:
-            color = family_colors.pop()
+            color = color_list.pop()
             print(f"  <tr style={{{{ background: '{ color }' }}}}>"
                   f"<th colspan='2'>{ family }</th><th></th></tr>")
             for backend, count in sorted(data.items(),
@@ -238,9 +240,13 @@ def main() -> int:
         if dependencies["setuptools"][family].sum == 0:
             continue
         backend = family
+        color = ""
         if backend != "(custom)" and len(family_data) <= 1:
             backend = f"`{ backend }`"
-        print(f"  <tr><td>{backend}</td>"
+        else:
+            color = f" style={{{{ background: '{ family_colors[backend] }' }}}}"
+
+        print(f"  <tr{color}><td>{backend}</td>"
               f"<td align='right'>{dependencies['setuptools'][family].sum}</td>"
               f"<td align='right'>{dependencies['wheel'][family].sum}</td></tr>")
     print("  <tr><td>Total</td>"

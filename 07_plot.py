@@ -120,9 +120,13 @@ def main() -> int:
     # 3) setuptools config format Venn diagram
     fig, ax = plt.subplots()
     formats = ("setup.py", "setup.cfg", "pyproject.toml")
-    venn3([setuptools_formats[x] for x in formats],
-          set_colors=((1, .5, .5), (.5, 1, .5), (.5, .5, 1)),
-          set_labels=formats)
+    c = venn3([setuptools_formats[x] for x in formats],
+              set_colors=((1, .5, .5), (.5, 1, .5), (.5, .5, 1)),
+              set_labels=formats)
+    # shift setup.cfg label to the right
+    c.get_label_by_id("B").set_position(
+        c.get_circle_center(1).asarray() + (c.get_circle_radius(1) + .05, 0)
+    )
     plt.savefig("fig3.svg",
                 transparent=True,
                 dpi=96,
